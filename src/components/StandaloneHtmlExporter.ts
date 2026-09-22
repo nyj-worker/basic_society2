@@ -1,0 +1,674 @@
+/**
+ * Generates a complete, zero-dependency, self-contained single HTML file 
+ * containing all chapters, interactive tabs, case studies, and calculators.
+ */
+export function generateStandaloneHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기본사회와 지방정부 - 단일 통합 보고서</title>
+  <style>
+    :root {
+      --bg-main: #090d16;
+      --bg-card: #111827;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); line-height: 1.6; }
+    .app-layout { display: flex; min-height: 100vh; }
+    
+    /* Left Sidebar */
+    .sidebar { width: 300px; background: #0f172a; border-right: 1px solid var(--border-color); padding: 24px 16px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; }
+    .sidebar-brand { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .sidebar-title { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
+    .sidebar-sub { font-size: 0.8rem; color: var(--primary); margin-top: 4px; }
+    .nav-tabs { display: flex; flex-direction: column; gap: 6px; }
+    .tab-btn { background: transparent; border: 1px solid transparent; color: #94a3b8; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; text-align: left; transition: all 0.2s; display: block; width: 100%; }
+    .tab-btn:hover { background: #1e293b; color: white; }
+    .tab-btn.active { background: #0284c7; border-color: #38bdf8; color: white; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+
+    /* Main Content */
+    .main-content { flex: 1; min-width: 0; padding: 36px 40px; max-width: 1100px; margin: 0 auto; }
+    header { border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 28px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: #0284c7; color: white; margin-bottom: 8px; }
+    h1 { font-size: 2.1rem; font-weight: 800; color: #ffffff; margin-bottom: 6px; }
+    .subtitle { color: var(--primary); font-size: 1.05rem; font-weight: 500; margin-bottom: 8px; }
+    .author-box { font-size: 0.85rem; color: var(--text-muted); }
+
+    @media (max-width: 860px) {
+      .app-layout { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
+      .main-content { padding: 20px; }
+    }
+    
+    .section-panel { display: none; animation: fadeIn 0.3s ease; }
+    .section-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 16px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .card h3 { color: var(--primary); margin-bottom: 8px; font-size: 1.25rem; }
+    .highlight-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid var(--primary); padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+    .table-custom { width: 100%; border-collapse: collapse; margin: 20px 0; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+    .table-custom th, .table-custom td { padding: 12px 16px; border: 1px solid var(--border-color); text-align: left; }
+    .table-custom th { background: #1e293b; color: var(--primary); }
+    .stat-number { font-size: 1.8rem; font-weight: 800; color: #38bdf8; }
+    .calculator { background: #131d2e; border: 1px solid #1e3a5f; padding: 24px; border-radius: 12px; margin-top: 24px; }
+    .calc-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+    .calc-field { flex: 1; min-width: 200px; }
+    .calc-field label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 6px; }
+    .calc-field input, .calc-field select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
+    .result-box { background: #064e3b; border: 1px solid #059669; padding: 16px; border-radius: 8px; text-align: center; }
+    footer { text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0; margin-top: 48px; color: var(--text-muted); font-size: 0.9rem; }
+
+    /* Light Mode */
+    body.light-mode {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --accent: #059669;
+      --warning: #d97706;
+    }
+    body.light-mode .sidebar {
+      background: #ffffff;
+      border-right-color: #e2e8f0;
+    }
+    body.light-mode .sidebar-title {
+      color: #0f172a;
+    }
+    body.light-mode .sidebar-sub {
+      color: #0284c7;
+    }
+    body.light-mode .tab-btn {
+      color: #475569;
+    }
+    body.light-mode .tab-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    body.light-mode .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+    }
+    body.light-mode h1,
+    body.light-mode h2,
+    body.light-mode h3,
+    body.light-mode h4 {
+      color: #0f172a;
+    }
+    body.light-mode .table-custom th {
+      background: #f1f5f9;
+      color: #0284c7;
+    }
+    body.light-mode .calc-field input,
+    body.light-mode .calc-field select {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+    body.light-mode .calculator {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    body.light-mode .highlight-box {
+      background: #f0f9ff;
+      border-left-color: #0284c7;
+    }
+    body.light-mode .result-box {
+      background: #ecfdf5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+    body.light-mode .result-box h3 {
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 왼쪽 사이드바 메뉴 -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">
+          <div class="sidebar-title">기본사회와 지방정부</div>
+          <div class="sidebar-sub">지방정부 중심 정책 가이드</div>
+        </div>
+        <nav class="nav-tabs" id="navTabs">
+          <button class="tab-btn active" onclick="switchTab('overview')">1. 기본사회 비전</button>
+          <button class="tab-btn" onclick="switchTab('rights')">2. 4대 기본권 체계</button>
+          <button class="tab-btn" onclick="switchTab('commons')">3. 공유부와 커머닝</button>
+          <button class="tab-btn" onclick="switchTab('ai')">4. AI 대전환 충격</button>
+          <button class="tab-btn" onclick="switchTab('climate')">5. 기후위기·햇빛바람소득</button>
+          <button class="tab-btn" onclick="switchTab('roles')">6. 지방정부 5대 역할</button>
+          <button class="tab-btn" onclick="switchTab('cases')">7. 국내외 혁신 사례</button>
+          <button class="tab-btn" onclick="switchTab('calc')">8. 배당 시뮬레이터</button>
+          <button class="tab-btn" onclick="switchTab('quiz')">9. 핵심 퀴즈</button>
+        </nav>
+      </div>
+      <div>
+        <button id="sidebarThemeToggleBtn" onclick="toggleTheme()" style="width: 100%; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; font-size: 0.82rem; font-weight: 600; text-align: center; transition: all 0.2s;">
+          ☀️ 라이트 모드로 전환
+        </button>
+        <div style="font-size:0.75rem; color:#64748b; padding-top:12px; border-top:1px solid var(--border-color);">
+          강남훈 교수 발표자료 종합<br>오프라인 단일 HTML 리포트
+        </div>
+      </div>
+    </aside>
+
+    <!-- 오른쪽 본문 메인 컨텐츠 -->
+    <div class="main-content">
+      <header>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+          <div>
+            <span class="badge">기본사회와 지방정부 종합 해설</span>
+            <h1>기본사회와 지방정부</h1>
+            <p class="subtitle">공유부를 지역의 권리로 — 중앙정부의 권한 이양과 지방정부의 역할</p>
+            <div class="author-box">강남훈 (기본사회위원회 부위원장 · 한신대학교 명예교수) 강연 및 정책 제안 종합</div>
+          </div>
+          <button id="themeToggleBtn" onclick="toggleTheme()" style="padding: 8px 14px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; font-size: 0.85rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;">
+            ☀️ 라이트 모드
+          </button>
+        </div>
+      </header>
+
+    <!-- 1. 기본사회 비전 -->
+    <div id="overview" class="section-panel active">
+      <div class="highlight-box">
+        <h3>헌법 제10조의 현대적 실현</h3>
+        <p>"모든 국민은 인간으로서의 존엄과 가치를 가지며, 행복을 추구할 권리를 가진다. 국가는 개인이 가지는 불가침의 기본적 인권을 확인하고 이를 보장할 의무를 진다."</p>
+        <p><strong>기본사회란?</strong> 국가와 공동체가 국민의 기본권을 최대한 보장하여, 모든 국민의 기본적인 삶을 실질적으로 책임지는 사회입니다. (제헌헌법의 사회정의 정신 계승)</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>5대 기본 원칙</h3>
+          <ul>
+            <li><strong>권리기반의 사전보장:</strong> 탈락 후 구제하는 시혜적 복지가 아닌 당당한 기본 권리</li>
+            <li><strong>참여 민주주의:</strong> 숙의공론과 주민 참여로 스스로 규칙을 만드는 사회</li>
+            <li><strong>사회적 연대와 통합:</strong> 중산층까지 순수혜자로 품어 조세저항 극복</li>
+            <li><strong>지역중심 정책과 지속가능성:</strong> 지역 고유의 공유부로 자립 순환경제 구축</li>
+            <li><strong>모두의 역량 향상:</strong> 기본조건 보장 위에서 잠재력과 역량을 극대화</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>4대 전략 & 18대 부문</h3>
+          <p><strong>1. 기반 보장:</strong> 안전·생명, 일자리, 주거, 먹거리, 에너지, 환경</p>
+          <p><strong>2. 소득 보장:</strong> 생애소득(아동·청년·기초연금), 지역소득, 혁신소득(기본소득, NIT, 참여소득, 기본자산)</p>
+          <p><strong>3. 기본 서비스:</strong> 보건의료, 돌봄, 교육, 교통·통신, 문화여가, 기본금융</p>
+          <p><strong>4. 함께 만드는 사회:</strong> AI 기술, 주민참여, 사회연대경제</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 4대 기본권 체계 -->
+    <div id="rights" class="section-panel">
+      <div class="highlight-box">
+        <h3>기본권의 4단계 진화 체계</h3>
+        <p>기존 복지국가는 자유권·참정권·사회권에 머물렀으나, 기본사회는 <strong>"공유부 배당권"</strong>을 4번째 기본권으로 확립합니다. <em>“가이사의 것은 가이사에게, 모두의 것은 모두에게”</em></p>
+      </div>
+      <table class="table-custom">
+        <thead>
+          <tr>
+            <th>기본권 구분</th>
+            <th>기존 관념 (형식적 보장)</th>
+            <th>기본사회의 새로운 지평 (실질적 보장)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. 자유권</strong></td>
+            <td>형식적 자유 (법률적 불간섭)</td>
+            <td><strong>실질적 자유 / 비지배 자유:</strong> 가난과 종속에서 벗어나 자기 삶을 주도하는 진짜 자유</td>
+          </tr>
+          <tr>
+            <td><strong>2. 참정권</strong></td>
+            <td>1인 1표 형식적 투표</td>
+            <td><strong>1인 1표 1가치 → 직접 민주주의 결합:</strong> 국민발안, 추첨제 주민의회, 선호투표제</td>
+          </tr>
+          <tr>
+            <td><strong>3. 사회권</strong></td>
+            <td>선별적 시혜, 극빈층 최저생계</td>
+            <td><strong>보편적 인간다운 생활권:</strong> 중산층까지 순수혜, 시장 내 '을(乙) 기본권' 및 'AI 시민권'</td>
+          </tr>
+          <tr>
+            <td><strong>4. 공유부 배당권</strong></td>
+            <td>사유재산 독점 (자원·토지 사유화)</td>
+            <td><strong>공유부 1/n 배당권:</strong> 자연·사회·데이터 공유부 지대를 전 시민에게 평등 환원</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. 공유부와 커머닝 -->
+    <div id="commons" class="section-panel">
+      <div class="card-grid">
+        <div class="card">
+          <h3>공유부(Common Wealth)란?</h3>
+          <p>특정한 사람만의 노동이나 기여에 의해 만들어진 것이 아니라면 그 사람만의 배타적 소유가 되어서는 안 되는 자산이나 자원.</p>
+          <ul>
+            <li><strong>자연공유부:</strong> 토지, 햇빛, 바람, 물, 생태계 (생태계 서비스 편익 가치는 세계 GDP의 2배)</li>
+            <li><strong>사회공유부:</strong> 언어(한글), 제도, 지식, 공공 인프라 (허버트 사이먼: 소득의 90%는 사회공유부 덕택)</li>
+            <li><strong>기부/오픈 공유부:</strong> 월드와이드웹(WWW, 팀 버너스 리), 오픈소스</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>공유부의 4대 딜레마</h3>
+          <ol>
+            <li><strong>과잉 사용:</strong> 공유지의 비극 (자원 남획)</li>
+            <li><strong>과소 기여:</strong> 무임승차자 문제 (협업 회피)</li>
+            <li><strong>인클로저:</strong> 사유화 독점과 대중 소외, 자원의 저주</li>
+            <li><strong>지대 발생:</strong> 위치적 독점에 따른 불로소득 지대 형성</li>
+          </ol>
+          <div class="highlight-box" style="margin-top:12px;">
+            <strong>해결책 (커머닝):</strong> 소수 독점자로부터 사용료/지대를 환수하여 기본소득으로 분배!
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <h3>엘리너 오스트롬(Ostrom)의 8대 커머닝 원칙</h3>
+        <p>1. 명확한 경계 | 2. 현지 조건 일치 | 3. 집단 선택 협정 | 4. 상호 감시 | 5. 점진적 제재 | 6. 신속한 갈등 해결 | 7. 조직화 권리 인정 | 8. 중첩된 조직(다층 거버넌스)</p>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <h3>시스템 사고의 빙산 모델 (Iceberg Model)</h3>
+        <p><strong>사건(Events)</strong> → <strong>패턴·추세(Trends)</strong> → <strong>시스템 구조(Structure)</strong> → <strong>정신 모델(Mental Model)</strong></p>
+        <p>수면 위의 사건을 땜질하는 것보다, 최심부의 <em>정신 모델(공유부 의식과 권리 인식)</em>을 바꿀 때 사회 시스템이 영구히 진화합니다. (도넬라 메도우스, 1999)</p>
+      </div>
+    </div>
+
+    <!-- 4. AI 대전환 충격 -->
+    <div id="ai" class="section-panel">
+      <div class="card-grid">
+        <div class="card">
+          <h3>대한민국 노동시장 현실 (2024년 8월)</h3>
+          <div class="stat-number">54.1%</div>
+          <p>확장경제활동인구 3,134만 명 중 <strong>불안정 노동자가 1,697만 명</strong>에 달함!</p>
+          <ul>
+            <li>비정규직: 923만 명</li>
+            <li>나홀로 자영업(고용원 없음): 427만 명</li>
+            <li>확장 실업자: 254만 명</li>
+            <li>무급가족종사자: 93만 명</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>반도체 AI 초과세수와 3가지 갈림길</h3>
+          <p>AI 호황으로 삼성전자·SK하이닉스 3년간 영업이익 약 2,000조 원, 2027년 두 기업 법인세만 120조 원 전망.</p>
+          <ul>
+            <li><strong>국가채무 상환:</strong> 구조적 흑자를 과거 부채 상쇄로 단순 소진 (한계)</li>
+            <li><strong>현금성 배당:</strong> 일회성 소비로 소멸, 자산 축적 불가 (한계)</li>
+            <li><strong>미래 투자(한국형 국부펀드):</strong> 영구적 공동자산으로 적립하여 운용수익을 매년 국민배당과 신산업에 재투자! (권고 대안)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 기후위기 & 햇빛바람소득 -->
+    <div id="climate" class="section-panel">
+      <div class="highlight-box">
+        <h3>한국의 에너지 전환 위기와 무역 장벽</h3>
+        <p>한국의 재생에너지 비중은 <strong>OECD 38개국 중 최하위 10%</strong> (독일 56%, 영국 48%).<br>
+        미국 청정경쟁법(CCA), EU CBAM, G7 기후클럽 등 탄소 국경세가 통과되면 수출 주도 한국 경제는 치명적 위기에 직면합니다.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>에너지 전환을 위한 2가지 기본소득</h3>
+          <p><strong>1. 탄소배당:</strong> 화석연료 탄소세 수입을 100% 전 국민에게 균등 배당 (노벨 경제학자 27인 지지 성명)</p>
+          <p><strong>2. 햇빛바람소득:</strong> 재생에너지 지분 투자와 사용료 환수로 매년 증가하는 소득 지급</p>
+        </div>
+        <div class="card">
+          <h3>햇빛바람소득 4대 모델</h3>
+          <ul>
+            <li><strong>공공지분 획득형:</strong> 해상풍력 20% 이내 바다 사용료 (중앙 10%, 광역 5%, 기초 5%)</li>
+            <li><strong>공공투자 지분획득형:</strong> 국부펀드·기후채권으로 해상풍력 SPC 지분 확보</li>
+            <li><strong>공공토지 투자형:</strong> 공영주차장, 저수지, 도로 등 유휴부지 발전</li>
+            <li><strong>주민참여형:</strong> 주민 협동조합 결성 및 REC 가중치 배당 (연 7~10% 이상 수익)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 지방정부 5대 역할 -->
+    <div id="roles" class="section-panel">
+      <div class="card-grid">
+        <div class="card">
+          <h3>1. 수탁자 (Trustee)</h3>
+          <p>자연·공공·제도 공유부 인벤토리를 조사하고, '지역 공유부 기금'을 조성해 원금을 보전하며 운용수익을 지역화폐로 배당.</p>
+        </div>
+        <div class="card">
+          <h3>2. 환수자 (Capturer)</h3>
+          <p>도시계획 사전협상제, 공공토지임대제, 도시공사 개발수익 환원, 빈집 공동체토지신탁(CLT) 편입으로 지대 환수.</p>
+        </div>
+        <div class="card">
+          <h3>3. 공급자 (Provider)</h3>
+          <p>기본주택(원가 임대), 24시간 통합돌봄, 친환경 로컬푸드 급식, 무상 대중교통, AI 리터러시, 필수 공공일자리 보장.</p>
+        </div>
+        <div class="card">
+          <h3>4. 설계자 (Designer)</h3>
+          <p>연천 청산면 같은 2~3년 준실험 설계, 지역화폐 역내 순환 데이터 추적, 성과 검증 후 전국 표준 법제화 견인.</p>
+        </div>
+        <div class="card">
+          <h3>5. 자치의 조직자 (Organizer)</h3>
+          <p>폐교 활용 '읍면동 기본사회 센터', 추첨제 주민의회 예산 심의, 읍면동장 주민추천제 등 풀뿌리 자치 회복.</p>
+        </div>
+        <div class="card">
+          <h3>광역·기초·읍면동 분담</h3>
+          <p><strong>광역:</strong> 재정 조정교부금, 광역교통·의료, 데이터 플랫폼</p>
+          <p><strong>기초:</strong> 공유부 발굴·배당 설계, 통합돌봄·주거 공급</p>
+          <p><strong>읍면동:</strong> 기본사회 센터 현장 전달, 주민의회 의사결정</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. 국내외 혁신 사례 -->
+    <div id="cases" class="section-panel">
+      <div class="card-grid">
+        <div class="card">
+          <span class="badge">국내 1호</span>
+          <h3>신안 햇빛·바람연금</h3>
+          <p>조례로 개발이익 공유화 의무화. 군민 협동조합이 30% 지분 확보하여 누적 220억 원 이상 지역화폐 배당. 소멸위기 속 인구 유입 반등!</p>
+        </div>
+        <div class="card">
+          <span class="badge">도시 마이크로그리드</span>
+          <h3>남양주 다산동 플루리움 모델</h3>
+          <p>황우현 교수 제안: 61개 동 아파트 옥상·방음벽·학교 20.5MW 설비, 전기차 400대 V2G 가상 ESS, 에너지 자립률 87.5%, 세대당 월 5~9만 원 소득 창출.</p>
+        </div>
+        <div class="card">
+          <span class="badge">유휴부지 총동원</span>
+          <h3>완주군 유휴부지 & 영농형 태양광</h3>
+          <p>공영주차장, 저수지(68MW), 수로, 농지 등 232MW 규모 조성. 연 533억 원 수익 창출, 자립률 19.6%에서 35.9%로 껑충.</p>
+        </div>
+        <div class="card">
+          <span class="badge">해상풍력 3단계</span>
+          <h3>부안형 신바람 기본사회</h3>
+          <p>1단계 조례 → 2단계 전 군민 월 15만 원 농어촌기본소득 → 3단계 2.46GW 서남해 해상풍력 결합 매월 30만 원 배당 선순환.</p>
+        </div>
+        <div class="card">
+          <span class="badge">독일 생태수도</span>
+          <h3>독일 프라이부르크 (보봉 지구)</h3>
+          <p>시유지 매각 조건에 저에너지 건축 부과, 트램 선제 부설로 승용차 분담률 16%로 축소. 쓰는 것보다 많은 전기를 생산하는 플러스에너지 주택.</p>
+        </div>
+        <div class="card">
+          <span class="badge">글로벌 최고 모델</span>
+          <h3>브라질 마리카 (Maricá)</h3>
+          <p>심해 유전 석유 로열티를 시 특별기금으로 환수, 지역화폐 '뭄부카'와 공공은행으로 주민에게 배당 및 버스 100% 무상 공영제 실현.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 지역경제 배당 시뮬레이터 -->
+    <div id="calc" class="section-panel">
+      <div class="calculator">
+        <h2 style="color:var(--primary); margin-bottom:12px;">지역 경제 배당금 시뮬레이터</h2>
+        <p style="color:var(--text-muted); margin-bottom:16px;">
+          지자체에서 기본사회 공유부 배당 정책을 도입했을 때 나타나는 <strong>연간 총 투입액, 골목상권 승수효과, 소상공인 매출 증대, 지방세수 환원 효과</strong>를 분석합니다.
+        </p>
+        
+        <div class="calc-row">
+          <div class="calc-field">
+            <label>지자체 인구 수 (명)</label>
+            <input type="number" id="ecoPop" value="45000" min="5000" max="1000000" step="5000" oninput="runEcoSim()">
+          </div>
+          <div class="calc-field">
+            <label>1인당 월 배당금 (만 원)</label>
+            <input type="number" id="ecoMonthly" value="15" min="1" max="100" step="1" oninput="runEcoSim()">
+          </div>
+          <div class="calc-field">
+            <label>가구당 평균 인원 (명)</label>
+            <input type="number" id="ecoHousehold" value="2.2" min="1" max="5" step="0.1" oninput="runEcoSim()">
+          </div>
+          <div class="calc-field">
+            <label>배당 지급 방식</label>
+            <select id="ecoType" onchange="runEcoSim()">
+              <option value="local_currency" selected>지역화폐 (역내 잔류율 92%, 승수 1.48배)</option>
+              <option value="cash">일반 현금 (수도권·이커머스 유출, 승수 1.12배)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="result-box" style="margin-top:20px; background:#0f2942; border:1px solid #0284c7;">
+          <div style="font-size:0.95rem; color:#bae6fd;">지자체 연간 총 배당 투입 예산</div>
+          <div id="resTotalBudget" style="font-size:1.6rem; font-weight:800; color:#ffffff; margin:4px 0;">810.0 억 원 / 년</div>
+          
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:16px; text-align:center;">
+            <div style="background:#081f33; padding:12px; border-radius:6px;">
+              <div style="font-size:0.85rem; color:#38bdf8; font-weight:bold;">지역경제 총 부가가치 유발 (승수효과)</div>
+              <div id="resEcoImpact" style="font-size:1.4rem; font-weight:800; color:#38bdf8; margin-top:4px;">1,102.9 억 원</div>
+            </div>
+            <div style="background:#081f33; padding:12px; border-radius:6px;">
+              <div style="font-size:0.85rem; color:#4ade80; font-weight:bold;">관내 소상공인 매출 증대</div>
+              <div id="resSmallBiz" style="font-size:1.4rem; font-weight:800; color:#4ade80; margin-top:4px;">+633.4 억 원</div>
+            </div>
+            <div style="background:#081f33; padding:12px; border-radius:6px;">
+              <div style="font-size:0.85rem; color:#fde047; font-weight:bold;">지자체 세수 환류 기대액</div>
+              <div id="resTaxBack" style="font-size:1.4rem; font-weight:800; color:#fde047; margin-top:4px;">+41.9 억 원</div>
+            </div>
+          </div>
+          <div id="resNote" style="font-size:0.85rem; color:#94a3b8; margin-top:12px;">
+            가구당 연간 약 396만 원(월 33만 원) 지원 효과로 가계 가처분소득이 크게 신장됩니다.
+          </div>
+        </div>
+
+        <div style="margin-top:28px; padding-top:20px; border-top:1px solid #334155;">
+          <h3 style="color:#38bdf8; margin-bottom:8px;">+ 재생에너지 발전 설비 배당 연계 계산</h3>
+          <div class="calc-row">
+            <div class="calc-field">
+              <label>발전 용량 (MW)</label>
+              <input type="number" id="calcMw" value="100" min="1" max="5000" oninput="runSim()">
+            </div>
+            <div class="calc-field">
+              <label>일평균 발전시간 (h)</label>
+              <input type="number" id="calcHours" value="3.5" step="0.1" min="1" max="6" oninput="runSim()">
+            </div>
+            <div class="calc-field">
+              <label>판매단가 (원/kWh)</label>
+              <input type="number" id="calcPrice" value="180" min="50" max="300" oninput="runSim()">
+            </div>
+            <div class="calc-field">
+              <label>공공지분율 (%)</label>
+              <input type="number" id="calcShare" value="20" min="5" max="100" oninput="runSim()">
+            </div>
+          </div>
+          <div style="background:#064e3b; padding:12px; border-radius:6px; margin-top:12px; font-size:0.95rem; color:#a7f3d0;">
+            연간 발전매출: <strong id="resTotalRevenue" style="color:white;">약 229.9억 원</strong> | 
+            공공기금 확보: <strong id="resFund" style="color:#38bdf8;">약 46.0억 원</strong> | 
+            1인당 연간: <strong id="resPerCapita" style="color:#fde047;">약 10.2만 원</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. 핵심 퀴즈 -->
+    <div id="quiz" class="section-panel">
+      <div class="highlight-box">
+        <h3>기본사회 & 지방정부 핵심 이해도 퀴즈 (5문항)</h3>
+        <p>강연 자료와 정책 제안서의 핵심을 자가 점검해 보세요.</p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <h4>Q1. 헌법 제10조에 기초하여 기본사회가 지향하는 기본적 삶의 보장 방식은?</h4>
+          <p style="margin:8px 0; color:#cbd5e1;">
+            <label><input type="radio" name="q1" value="0"> 극빈층으로 탈락한 뒤 증빙 심사를 거쳐 제공하는 선별적 복지</label><br>
+            <label><input type="radio" name="q1" value="1"> <strong>인간다운 존엄을 유지할 수 있도록 모든 국민에게 권리로서 사전 보장</strong></label><br>
+            <label><input type="radio" name="q1" value="2"> 시장 경쟁 원리에 모든 복지를 맡기고 국가는 최소 개입</label>
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>Q2. 기본사회가 기존의 3대 기본권(자유권, 참정권, 사회권)에 더하여 신설을 제안한 4번째 기본권은?</h4>
+          <p style="margin:8px 0; color:#cbd5e1;">
+            <label><input type="radio" name="q2" value="0"> <strong>공유부 배당권 (자연·사회공유부 지대의 1/n 평등 배당권)</strong></label><br>
+            <label><input type="radio" name="q2" value="1"> 금융투자소득세 면제권</label><br>
+            <label><input type="radio" name="q2" value="2"> 개발제한구역 자유개발권</label>
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>Q3. 2024년 8월 기준 대한민국 노동시장에서 '불안정 노동자'가 차지하는 비율은?</h4>
+          <p style="margin:8px 0; color:#cbd5e1;">
+            <label><input type="radio" name="q3" value="0"> 약 15.2%</label><br>
+            <label><input type="radio" name="q3" value="1"> <strong>약 54.1% (1,697만 명)</strong></label><br>
+            <label><input type="radio" name="q3" value="2"> 약 85.0%</label>
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>Q4. 재생에너지 간헐성으로 인한 전계통비용 급증 문제를 해결하기 위해 공공이 취해야 할 올바른 대응은?</h4>
+          <p style="margin:8px 0; color:#cbd5e1;">
+            <label><input type="radio" name="q4" value="0"> 송배전망과 ESS 설치를 전액 민간 사업자에게 전가</label><br>
+            <label><input type="radio" name="q4" value="1"> <strong>기후채권 발행과 공공 인프라 투자(국토 1.5% 재생에너지 의무화)를 통한 공공 주도 망 구축</strong></label><br>
+            <label><input type="radio" name="q4" value="2"> 화석연료 발전 비중을 80% 이상으로 유지</label>
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>Q5. 지방정부의 기본사회 5대 역할에 포함되지 않는 것은?</h4>
+          <p style="margin:8px 0; color:#cbd5e1;">
+            <label><input type="radio" name="q5" value="0"> 공유부 인벤토리를 관리하고 기금을 조성하는 수탁자</label><br>
+            <label><input type="radio" name="q5" value="1"> 계획이득과 지대를 지역으로 환수하는 환수자</label><br>
+            <label><input type="radio" name="q5" value="2"> <strong>중앙정부의 지시만 기계적으로 수동 집행하는 단순 보조금 집행자</strong></label>
+          </p>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:20px;">
+        <button onclick="checkQuiz()" class="tab-btn active" style="padding:12px 28px; font-size:1rem; cursor:pointer;">
+          퀴즈 정답 채점하기
+        </button>
+        <div id="quizResult" style="margin-top:16px; font-size:1.1rem; font-weight:bold; color:#38bdf8;"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>기본사회와 지방정부 인터랙티브 지식베이스 | 강남훈 교수 (한신대학교 명예교수, 기본사회위원회 부위원장) 자료 기반</p>
+      <p style="margin-top:6px;">본 단일 HTML 문서는 모든 브라우저에서 서버 없이 독립적으로 열어볼 수 있도록 제작되었습니다.</p>
+    </footer>
+    </div> <!-- /main-content -->
+  </div> <!-- /app-layout -->
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.section-panel').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      const btns = document.querySelectorAll('.tab-btn');
+      btns.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(tabId)) {
+          btn.classList.add('active');
+        }
+      });
+    }
+
+    function runEcoSim() {
+      const pop = parseFloat(document.getElementById('ecoPop').value) || 45000;
+      const monthly = parseFloat(document.getElementById('ecoMonthly').value) || 15;
+      const household = parseFloat(document.getElementById('ecoHousehold').value) || 2.2;
+      const type = document.getElementById('ecoType').value;
+
+      const annualPerCapita = monthly * 10000 * 12;
+      const annualHousehold = annualPerCapita * household;
+      const totalBudget = annualPerCapita * pop;
+
+      const retention = type === 'local_currency' ? 0.92 : 0.52;
+      const multiplier = type === 'local_currency' ? 1.48 : 1.12;
+
+      const retainedDirect = totalBudget * retention;
+      const totalEcoImpact = retainedDirect * multiplier;
+      const smallBiz = retainedDirect * 0.85;
+      const taxBack = totalEcoImpact * 0.038;
+
+      document.getElementById('resTotalBudget').innerText = (totalBudget / 100000000).toFixed(1) + ' 억 원 / 년';
+      document.getElementById('resEcoImpact').innerText = (totalEcoImpact / 100000000).toFixed(1) + ' 억 원';
+      document.getElementById('resSmallBiz').innerText = '+' + (smallBiz / 100000000).toFixed(1) + ' 억 원';
+      document.getElementById('resTaxBack').innerText = '+' + (taxBack / 100000000).toFixed(1) + ' 억 원';
+
+      document.getElementById('resNote').innerText = 
+        '가구당 연간 약 ' + (annualHousehold / 10000).toFixed(0) + '만 원(월 ' + Math.round(annualHousehold / 120000) + '만 원) 지원 효과. ' +
+        (type === 'local_currency' ? '지역화폐로 골목상권 92% 잔류 및 1.48배 승수효과 발생!' : '일반 현금 지급으로 약 48% 역외 유출 발생.');
+      
+      // Update linked energy sim pop
+      const calcPopEl = document.getElementById('calcPop');
+      if (calcPopEl) calcPopEl.value = pop;
+      runSim();
+    }
+
+    function runSim() {
+      const mw = parseFloat(document.getElementById('calcMw').value) || 0;
+      const hours = parseFloat(document.getElementById('calcHours').value) || 3.5;
+      const price = parseFloat(document.getElementById('calcPrice').value) || 180;
+      const share = parseFloat(document.getElementById('calcShare').value) || 20;
+      const pop = parseFloat(document.getElementById('ecoPop') ? document.getElementById('ecoPop').value : 45000) || 10000;
+
+      const annualKwh = mw * 1000 * hours * 365;
+      const totalRevenue = annualKwh * price;
+      const fund = totalRevenue * (share / 100);
+      const perCapita = pop > 0 ? (fund / pop) : 0;
+
+      if (document.getElementById('resTotalRevenue')) {
+        document.getElementById('resTotalRevenue').innerText = '약 ' + (totalRevenue / 100000000).toFixed(1) + '억 원';
+        document.getElementById('resFund').innerText = '약 ' + (fund / 100000000).toFixed(1) + '억 원';
+        document.getElementById('resPerCapita').innerText = '약 ' + (perCapita / 10000).toFixed(1) + '만 원';
+      }
+    }
+
+    function checkQuiz() {
+      const answers = { q1: "1", q2: "0", q3: "1", q4: "1", q5: "2" };
+      let score = 0;
+      let total = 5;
+
+      for (let k in answers) {
+        const checked = document.querySelector('input[name="' + k + '"]:checked');
+        if (checked && checked.value === answers[k]) {
+          score++;
+        }
+      }
+
+      const res = document.getElementById('quizResult');
+      res.innerText = '채점 결과: ' + total + '문제 중 ' + score + '문제 정답! (' + Math.round((score/total)*100) + '점)';
+      res.style.color = score === 5 ? '#4ade80' : '#38bdf8';
+    }
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      const btn = document.getElementById('themeToggleBtn');
+      const sidebarBtn = document.getElementById('sidebarThemeToggleBtn');
+      const text = isLight ? '🌙 다크 모드로 전환' : '☀️ 라이트 모드로 전환';
+      if (btn) btn.innerText = text;
+      if (sidebarBtn) sidebarBtn.innerText = text;
+      try {
+        localStorage.setItem('basic_society_theme', isLight ? 'light' : 'dark');
+      } catch (e) {}
+    }
+
+    try {
+      if (localStorage.getItem('basic_society_theme') === 'light') {
+        document.body.classList.add('light-mode');
+        const btn = document.getElementById('themeToggleBtn');
+        const sidebarBtn = document.getElementById('sidebarThemeToggleBtn');
+        if (btn) btn.innerText = '🌙 다크 모드로 전환';
+        if (sidebarBtn) sidebarBtn.innerText = '🌙 다크 모드로 전환';
+      }
+    } catch (e) {}
+
+    window.onload = function() {
+      runEcoSim();
+    };
+  </script>
+</body>
+</html>`;
+}

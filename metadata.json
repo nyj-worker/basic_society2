@@ -1,0 +1,6 @@
+{
+  "name": "기본사회와 지방정부",
+  "description": "기본사회의 철학적 기초, 공유부(커먼즈)와 AI·기후 대전환, 지방정부의 5대 역할 및 국내외 혁신 사례를 한눈에 탐색하는 종합 인터랙티브 가이드",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
